@@ -1,0 +1,1051 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  INCUBATOR_ADMIN
+  STARTUP_FOUNDER
+  MENTOR
+  GRANTOR
+}
+
+enum StartupStage {
+  IDEATION
+  VALIDATION
+  EARLY_TRACTION
+  SCALING
+  GROWTH
+  GRADUATED
+}
+
+enum StartupSector {
+  AGRITECH
+  EDTECH
+  FINTECH
+  HEALTHTECH
+  FOODTECH
+  CLEANTECH
+  DEEPTECH
+  SAAS
+  ECOMMERCE
+  LOGISTICS
+  SOCIAL_IMPACT
+  MANUFACTURING
+  AI_ML
+  IOT
+  BIOTECH
+  OTHER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+}
+
+enum FundStatus {
+  PENDING
+  DISBURSED
+  UTILIZED
+}
+
+enum AlumniStatus {
+  ACTIVE
+  GRADUATED
+  ACQUIRED
+  SHUT_DOWN
+  PIVOTED
+}
+
+enum IPType {
+  PATENT
+  TRADEMARK
+  COPYRIGHT
+  DESIGN
+}
+
+enum IPStatus {
+  FILED
+  PUBLISHED
+  GRANTED
+  REJECTED
+  EXPIRED
+}
+
+enum SpaceType {
+  CO_WORKING
+  PRIVATE_OFFICE
+  LAB
+  MEETING_ROOM
+  EQUIPMENT
+  WORKSHOP_AREA
+}
+
+enum OnboardingStatus {
+  DRAFT
+  INVITED
+  JOINED
+}
+
+enum FundingStatus {
+  INCUBATED
+  FUNDED
+  GRADUATED
+}
+
+enum DataRequestStatus {
+  PENDING
+  SUBMITTED
+  OVERDUE
+}
+
+enum ProgramType {
+  AIM
+  RKVY
+  DST
+  DPIIT
+  BIRAC
+  TIDE
+  HDFC_PARIVARTAN
+  STATE_GOVT
+  CORPORATE
+  CUSTOM
+}
+
+enum ServiceCategory {
+  LAB_TESTING
+  PROTOTYPING
+  WORKSPACE
+  LEGAL
+  ACCOUNTING
+  DESIGN
+  TECHNOLOGY
+  MENTORING
+  FUNDING
+  MARKETING
+  EVENTS
+  EQUIPMENT_ACCESS
+  AWS_CREDITS
+  OTHER
+}
+
+enum ServicePricingType {
+  FREE
+  PAID
+  CONTACT_US
+}
+
+enum ServiceRequestStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum TeamRole {
+  ADMIN
+  MEMBER
+}
+
+model TeamInvite {
+  id          String     @id @default(cuid())
+  email       String?
+  token       String     @unique @default(cuid())
+  role        TeamRole   @default(MEMBER)
+  status      InviteStatus @default(PENDING)
+  programId   String?    // If MEMBER, which program they're assigned to
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([token])
+  @@index([organizationId])
+}
+
+// ─── SUBSCRIPTIONS (Razorpay) ────────────────────────────
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  status              SubscriptionStatus @default(TRIAL)
+  plan                String             @default("pro")
+  razorpaySubId       String?            @unique
+  razorpayCustomerId  String?
+  startupCount        Int                @default(0)
+  trialEndsAt         DateTime?
+  currentPeriodEnd    DateTime?
+  cancelledAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+// ─── CORE MODELS ─────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  image         String?
+  photo         String?   // Founder photo URL
+  phone         String?
+  dinNumber     String?   // Director Identification Number
+  role          UserRole
+  teamRole      TeamRole?  // ADMIN or MEMBER — for incubator team members
+  assignedProgramId String? // If MEMBER, which program they can access
+  passportId    String?   @unique // Founder passport: IBF-2026-MH-0007
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Active startup context (for session — which startup is "selected" right now)
+  activeStartupId String?
+
+  // Relations
+  organization    Organization? @relation("OrgAdmin", fields: [organizationId], references: [id])
+  organizationId  String?
+  startups        Startup[]     @relation("StartupFounders") // many-to-many
+  mentorProfile   Mentor?
+  accounts        Account[]
+  sessions        Session[]
+  chatThreads     ChatThread[]
+  notifications   Notification[]
+  formResponses   FormResponse[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── ORGANIZATION (INCUBATOR) ────────────────────────────
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  logo        String?
+  website     String?
+  city        String?
+  state       String?
+  type        String?  // TBI, AIC, State Incubator, Private, University etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Hierarchy: parent org for reporting chains
+  parentOrg   Organization?  @relation("OrgHierarchy", fields: [parentOrgId], references: [id])
+  parentOrgId String?
+  childOrgs   Organization[] @relation("OrgHierarchy")
+
+  // Relations
+  subscription    Subscription?
+  admins          User[]           @relation("OrgAdmin")
+  programs        Program[]
+  cohorts         Cohort[]
+  invites         Invite[]
+  teamInvites     TeamInvite[]
+  mentors         Mentor[]
+  reportTemplates ReportTemplate[]
+  documents       Document[]
+  spaces          Space[]
+  events          Event[]
+  grantorReports  GrantorReport[]
+  jobCategories   JobCategory[]
+  dataRequests    DataRequest[]
+  serviceListings ServiceListing[]
+  forms           Form[]
+  dueDiligences   DueDiligence[]
+
+  @@index([slug])
+}
+
+// ─── PROGRAMS (AIM, RKVY, DST, Custom, etc.) ────────────
+
+model Program {
+  id               String      @id @default(cuid())
+  name             String      // "AIM Incubation Program", "RKVY-RAFTAAR Batch 3"
+  type             ProgramType @default(CUSTOM)
+  grantor          String?     // "Atal Innovation Mission", "RKVY", "HDFC"
+  description      String?     @db.Text
+  reportingCycle   String      @default("MONTHLY") // MONTHLY, QUARTERLY, ANNUAL
+  focusAreas       String[]    // ["Clean Energy", "Horticulture", "Agriculture"]
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // Fund tracking
+  totalFundPool    Float       @default(0) // Total grant amount for this program
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+
+  cohorts          Cohort[]
+  verticals        Vertical[]
+  reportTemplates  ReportTemplate[] @relation("ProgramTemplates")
+  milestoneTemplates MilestoneTemplate[] @relation("ProgramMilestones")
+  dataRequests     DataRequest[]
+  mentors          Mentor[] @relation("MentorPrograms")
+  forms            Form[]
+
+  @@index([organizationId])
+}
+
+// ─── VERTICALS (Sub-programs within a Program) ──────────
+
+model Vertical {
+  id          String   @id @default(cuid())
+  name        String   // "Student Innovators", "Pre-Seed Accelerator"
+  description String?  @db.Text
+  logo        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  program     Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId   String
+
+  cohorts     Cohort[]
+  startups    Startup[]
+
+  @@index([programId])
+}
+
+// ─── COHORT ──────────────────────────────────────────────
+
+model Cohort {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?  @db.Text
+  logo           String?
+  year           Int?     // e.g. 2026
+  startDate      DateTime
+  endDate        DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  program        Program  @relation(fields: [programId], references: [id])
+  programId      String
+
+  vertical       Vertical? @relation(fields: [verticalId], references: [id])
+  verticalId     String?
+
+  startups   Startup[]
+  milestones MilestoneTemplate[]
+
+  @@index([organizationId])
+  @@index([programId])
+  @@index([verticalId])
+}
+
+// ─── STARTUP ─────────────────────────────────────────────
+
+model Startup {
+  id                  String       @id @default(cuid())
+  name                String
+  slug                String       @unique
+  passportId          String?      @unique // Startup passport: IB-2026-MH-0042
+  onboardingStatus    OnboardingStatus @default(DRAFT)
+  description         String?      @db.Text
+  logo                String?
+  website             String?
+  sector              StartupSector @default(OTHER)
+  focusArea           String?      // e.g. "Clean Energy", "Horticulture"
+  stage               StartupStage @default(IDEATION)
+  foundedDate         DateTime?
+  city                String?
+  state               String?
+
+  // Key metrics (latest snapshot)
+  employeesCount      Int          @default(0)
+  revenue             Float        @default(0)
+  funding             Float        @default(0)
+  customersCount      Int          @default(0)
+
+  // Registration details
+  dpiitRecognized     Boolean      @default(false)
+  dpiitNumber         String?
+  cinNumber           String?
+  gstNumber           String?
+  panNumber           String?
+
+  // ─── Diversity & Inclusion Tags ────────────────────────
+  founderGender       String?      // male, female, transgender, other
+  founderCategory     String?      // general, sc, st, obc, ews, minority
+  isRural             Boolean      @default(false)
+  isWomenLed          Boolean      @default(false)
+
+  // ─── Funding Status ────────────────────────────────────
+  fundingStatus       FundingStatus @default(INCUBATED)
+  grantAmount         Float?        // Amount of grant/funding received
+  grantDate           DateTime?     // When funded
+  grantReference      String?       // Cheque number, reference ID
+  grantSource         String?       // Source: "RKVY", "AIM Seed Fund", "CSR"
+
+  // ─── Alumni Tracking ──────────────────────────────────
+  alumniStatus        AlumniStatus @default(ACTIVE)
+  graduatedAt         DateTime?
+  postGradRevenue     Float?       // Revenue after graduating
+  postGradFunding     Float?       // Funding raised after graduation
+  postGradEmployees   Int?         // Employees after graduation
+  acquiredBy          String?      // If acquired, by whom
+  alumniNotes         String?      @db.Text
+
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  // Passport flags (cross-incubator detection results)
+  passportFlags       Json?        // [{signal, match, details}]
+
+  // Relations
+  cohort              Cohort       @relation(fields: [cohortId], references: [id])
+  cohortId            String
+  vertical            Vertical?    @relation(fields: [verticalId], references: [id])
+  verticalId          String?
+  founders            User[]       @relation("StartupFounders") // many-to-many
+  reports             Report[]
+  milestones          Milestone[]
+  mentorSessions      MentorSession[]
+  funds               Fund[]
+  documents           Document[]
+  spaceAllocations    SpaceAllocation[]
+  eventAttendances    EventAttendance[]
+  intellectualProperties IntellectualProperty[]
+  jobRecords          JobRecord[]
+  socialImpacts       SocialImpact[]
+  dataRequestResponses DataRequestResponse[]
+  serviceRequests     ServiceRequest[]
+  awards              Award[]
+  formResponses       FormResponse[]
+  dueDiligences       DueDiligence[]
+
+  @@index([cohortId])
+  @@index([sector])
+  @@index([stage])
+  @@index([alumniStatus])
+}
+
+// ─── MONTHLY REPORTS ─────────────────────────────────────
+
+model ReportTemplate {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  fields         Json     // Array of field definitions: [{name, label, type, required, options}]
+  isDefault      Boolean  @default(false)
+  grantor        String?  // AIM, DST, DPIIT, State Body name - if this template is for a specific grantor
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  program        Program?  @relation("ProgramTemplates", fields: [programId], references: [id])
+  programId      String?
+
+  reports Report[]
+
+  @@index([organizationId])
+  @@index([programId])
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  month          Int          // 1-12
+  year           Int
+  status         ReportStatus @default(DRAFT)
+  data           Json         // Key-value pairs matching template fields
+  submittedAt    DateTime?
+  reviewedAt     DateTime?
+  reviewNotes    String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  startup        Startup        @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId      String
+  template       ReportTemplate @relation(fields: [templateId], references: [id])
+  templateId     String
+
+  @@unique([startupId, month, year])
+  @@index([startupId])
+  @@index([month, year])
+}
+
+// ─── GRANTOR REPORTS (Aggregated) ────────────────────────
+
+model GrantorReport {
+  id          String   @id @default(cuid())
+  name        String
+  grantor     String   // AIM, DST, DPIIT, State Body
+  period      String   // Q1 2026, Annual 2025-26, etc.
+  data        Json     // Aggregated data snapshot
+  generatedAt DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([organizationId])
+}
+
+// ─── MILESTONES & KPIs ───────────────────────────────────
+
+model MilestoneTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  dueOffset   Int?     // Days from cohort start
+  createdAt   DateTime @default(now())
+
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  cohortId    String
+
+  program     Program?  @relation("ProgramMilestones", fields: [programId], references: [id])
+  programId   String?
+
+  milestones  Milestone[]
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  status      MilestoneStatus @default(NOT_STARTED)
+  notes       String?         @db.Text
+  completedAt DateTime?
+  dueDate     DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  startup     Startup           @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId   String
+  template    MilestoneTemplate @relation(fields: [templateId], references: [id])
+  templateId  String
+
+  @@unique([startupId, templateId])
+}
+
+// ─── MENTORS ─────────────────────────────────────────────
+
+model Mentor {
+  id          String   @id @default(cuid())
+  expertise   String[] // Array of specializations
+  bio         String?  @db.Text
+  photo       String?  // Mentor photo URL
+  cvUrl       String?  // CV/resume document URL
+  linkedIn    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  sessions MentorSession[]
+  programs Program[] @relation("MentorPrograms")
+}
+
+model MentorSession {
+  id          String    @id @default(cuid())
+  date        DateTime
+  duration    Int       // minutes
+  notes       String?   @db.Text
+  actionItems String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  mentor    Mentor  @relation(fields: [mentorId], references: [id])
+  mentorId  String
+  startup   Startup @relation(fields: [startupId], references: [id])
+  startupId String
+}
+
+// ─── FUND TRACKING ───────────────────────────────────────
+
+model Fund {
+  id           String     @id @default(cuid())
+  name         String
+  amount       Float
+  status       FundStatus @default(PENDING)
+  disbursedAt  DateTime?
+  utilizedAt   DateTime?
+  notes        String?    @db.Text
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+}
+
+// ─── DOCUMENTS ───────────────────────────────────────────
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // pitch_deck, incorporation_cert, dpiit_cert, patent, etc.
+  url         String
+  size        Int?     // bytes
+  createdAt   DateTime @default(now())
+
+  startup        Startup?      @relation(fields: [startupId], references: [id])
+  startupId      String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+}
+
+// ─── INFRASTRUCTURE / CO-WORKING ─────────────────────────
+
+model Space {
+  id          String    @id @default(cuid())
+  name        String
+  type        SpaceType
+  capacity    Int?
+  allocated   Int       @default(0)  // Currently allocated count
+  location    String?   // Floor, building, etc.
+  description String?   @db.Text
+  image       String?   // Photo of the space
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  allocations SpaceAllocation[]
+
+  @@index([organizationId])
+}
+
+model SpaceAllocation {
+  id        String    @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+  notes     String?   @db.Text
+  createdAt DateTime  @default(now())
+
+  space     Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId   String
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+}
+
+// ─── EVENTS & WORKSHOPS ─────────────────────────────────
+
+model Event {
+  id           String    @id @default(cuid())
+  name         String
+  type         String    // hackathon, workshop, demo_day, bootcamp, investor_meet, session, seminar
+  description  String?   @db.Text
+  date         DateTime
+  endDate      DateTime?
+  venue        String?
+  isVirtual    Boolean   @default(false)
+  maxAttendees Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  attendees EventAttendance[]
+
+  @@index([organizationId])
+  @@index([date])
+}
+
+model EventAttendance {
+  id        String  @id @default(cuid())
+  attended  Boolean @default(false)
+  feedback  String? @db.Text
+
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+
+  @@unique([eventId, startupId])
+}
+
+// ─── INTELLECTUAL PROPERTY ──────────────────────────────
+
+model IntellectualProperty {
+  id            String    @id @default(cuid())
+  title         String
+  type          IPType
+  status        IPStatus  @default(FILED)
+  applicationNo String?
+  filedDate     DateTime?
+  grantedDate   DateTime?
+  description   String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+
+  @@index([startupId])
+}
+
+// ─── JOBS CREATED ────────────────────────────────────────
+
+model JobCategory {
+  id          String  @id @default(cuid())
+  name        String  // e.g. "Farmers", "Artisans", "Weavers", "Full-time", "Part-time"
+  type        String  // "direct" or "indirect"
+  description String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  jobRecords JobRecord[]
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+}
+
+model JobRecord {
+  id          String   @id @default(cuid())
+  count       Int
+  month       Int
+  year        Int
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  startup    Startup     @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId  String
+  category   JobCategory @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  @@unique([startupId, categoryId, month, year])
+  @@index([startupId])
+}
+
+// ─── SOCIAL IMPACT / SOCIAL CAPITAL ─────────────────────
+
+model SocialImpact {
+  id          String   @id @default(cuid())
+  metricName  String   // lives_impacted, farmers_supported, students_trained, co2_reduced, etc.
+  value       Float
+  unit        String   // people, families, villages, kg, tons, etc.
+  month       Int
+  year        Int
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+
+  @@unique([startupId, metricName, month, year])
+  @@index([startupId])
+}
+
+// ─── INVITES ─────────────────────────────────────────────
+
+model Invite {
+  id        String       @id @default(cuid())
+  email     String?
+  token     String       @unique @default(cuid())
+  status    InviteStatus @default(PENDING)
+  role      UserRole     @default(STARTUP_FOUNDER)
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  cohortId       String? // Optional: auto-assign to cohort
+
+  @@index([token])
+}
+
+// ─── FORMS (Investment, Call for Entries, Due Diligence) ─
+
+enum FormType {
+  INVESTMENT
+  CALL_FOR_ENTRIES
+  DUE_DILIGENCE
+}
+
+enum FormResponseStatus {
+  SUBMITTED
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+}
+
+model Form {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  type        FormType
+  fields      Json      // [{name, label, type, required, options, placeholder}]
+  isPublic    Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  deadline    DateTime?
+  targetStartupIds String[] // For INVESTMENT: which startups to send to
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  program     Program?  @relation(fields: [programId], references: [id])
+  programId   String?
+
+  responses   FormResponse[]
+
+  @@index([organizationId])
+  @@index([type])
+}
+
+model FormResponse {
+  id              String             @id @default(cuid())
+  data            Json
+  status          FormResponseStatus @default(SUBMITTED)
+  respondentName  String?
+  respondentEmail String?
+  respondentPhone String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    String
+
+  startup   Startup? @relation(fields: [startupId], references: [id])
+  startupId String?
+
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+
+  @@index([formId])
+  @@index([status])
+}
+
+// ─── DUE DILIGENCE ───────────────────────────────────
+
+model DueDiligence {
+  id           String   @id @default(cuid())
+  documentUrl  String   // Uploaded scanned document
+  reviewerName String
+  reviewDate   DateTime
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  startup      Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId    String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  @@index([startupId])
+  @@index([organizationId])
+}
+
+// ─── AWARDS & RECOGNITION ────────────────────────────
+
+model Award {
+  id          String   @id @default(cuid())
+  title       String   // "Best AgriTech Startup 2026"
+  description String?  @db.Text
+  date        DateTime?
+  image       String?  // Award photo/certificate
+  socialUrl   String?  // Social media announcement link
+  createdAt   DateTime @default(now())
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+
+  @@index([startupId])
+}
+
+// ─── MARKETPLACE (Service Listings) ─────────────────
+
+model ServiceListing {
+  id           String             @id @default(cuid())
+  title        String
+  description  String?            @db.Text
+  image        String?            // Photo of equipment/facility
+  category     ServiceCategory
+  pricingType  ServicePricingType @default(CONTACT_US)
+  price        Float?             // If PAID, amount in INR
+  priceUnit    String?            // "per test", "per hour", "per month"
+  availability String             @default("AVAILABLE") // AVAILABLE, LIMITED, BY_APPOINTMENT
+  isActive     Boolean            @default(true)
+  city         String?
+  state        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  requests ServiceRequest[]
+
+  @@index([organizationId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model ServiceRequest {
+  id        String               @id @default(cuid())
+  status    ServiceRequestStatus @default(REQUESTED)
+  message   String?              @db.Text // Startup's message
+  notes     String?              @db.Text // Incubator's notes
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  listing   ServiceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+
+  @@index([listingId])
+  @@index([startupId])
+  @@index([status])
+}
+
+// ─── DATA REQUESTS (Ad-hoc asks from incubator) ─────
+
+model DataRequest {
+  id          String   @id @default(cuid())
+  title       String   // "Submit last month's revenue"
+  description String?  @db.Text
+  fields      Json     // [{name, label, type, required}] — same format as ReportTemplate
+  deadline    DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  program     Program?  @relation(fields: [programId], references: [id])
+  programId   String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  responses   DataRequestResponse[]
+
+  @@index([organizationId])
+  @@index([deadline])
+}
+
+model DataRequestResponse {
+  id        String            @id @default(cuid())
+  status    DataRequestStatus @default(PENDING)
+  data      Json?             // Key-value response matching request fields
+  submittedAt DateTime?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  request   DataRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId String
+
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  startupId String
+
+  @@unique([requestId, startupId])
+  @@index([startupId])
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // report_reminder, review_feedback, milestone_due, event_reminder, general
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  link      String?  // Optional deep-link path e.g. /startup/reports
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ─── AI CHAT ─────────────────────────────────────────────
+
+model ChatThread {
+  id        String        @id @default(cuid())
+  title     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  role      String   // "user" or "assistant"
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId  String
+}

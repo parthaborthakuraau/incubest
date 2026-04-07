@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 import Groq from "groq-sdk";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     // Gather context based on user role
     let context = "";
 
-    if (session.user.role === "INCUBATOR_ADMIN" && session.user.organizationId) {
+    if (isIncubatorRole(session.user.role) && session.user.organizationId) {
       const org = await db.organization.findUnique({
         where: { id: session.user.organizationId },
         include: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 // GET — incubator: own listings, startup: all active listings across platform
 export async function GET(req: NextRequest) {
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state");
   const search = searchParams.get("q");
 
-  if (session.user.role === "INCUBATOR_ADMIN") {
+  if (isIncubatorRole(session.user.role)) {
     // Incubator sees own listings + incoming requests
     const listings = await db.serviceListing.findMany({
       where: { organizationId: session.user.organizationId! },
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
 // POST — incubator creates a service listing
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
 // DELETE — incubator removes a listing
 export async function DELETE(req: NextRequest) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 // Get reports
 export async function GET(req: NextRequest) {
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "No startup found" }, { status: 404 });
     }
     where.startupId = startup.id;
-  } else if (session.user.role === "INCUBATOR_ADMIN") {
+  } else if (isIncubatorRole(session.user.role)) {
     const programId = searchParams.get("programId");
     if (startupId) {
       where.startupId = startupId;
@@ -149,7 +150,7 @@ export async function POST(req: NextRequest) {
 // Review a report (INCUBATOR_ADMIN only)
 export async function PATCH(req: NextRequest) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

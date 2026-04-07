@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 // GET data requests
 export async function GET() {
@@ -9,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.role === "INCUBATOR_ADMIN") {
+  if (isIncubatorRole(session.user.role)) {
     const orgId = session.user.organizationId!;
     const requests = await db.dataRequest.findMany({
       where: { organizationId: orgId },
@@ -66,7 +67,7 @@ export async function GET() {
 // POST — incubator creates a data request and assigns to specific startups
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

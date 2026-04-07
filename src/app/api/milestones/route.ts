@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 // GET milestones — incubator sees all, startup sees own
 export async function GET() {
@@ -27,7 +28,7 @@ export async function GET() {
     return NextResponse.json(milestones);
   }
 
-  if (session.user.role === "INCUBATOR_ADMIN") {
+  if (isIncubatorRole(session.user.role)) {
     const orgId = session.user.organizationId!;
     const milestones = await db.milestone.findMany({
       where: { startup: { cohort: { organizationId: orgId } } },

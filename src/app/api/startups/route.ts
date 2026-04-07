@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 export async function GET() {
   const session = await auth();
@@ -8,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.role === "INCUBATOR_ADMIN") {
+  if (isIncubatorRole(session.user.role)) {
     // Get all startups for this incubator's cohorts
     const startups = await db.startup.findMany({
       where: {

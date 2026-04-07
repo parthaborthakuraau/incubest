@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 import bcrypt from "bcryptjs";
 
 // GET settings data
@@ -16,7 +17,7 @@ export async function GET() {
   });
 
   let organization = null;
-  if (session.user.role === "INCUBATOR_ADMIN" && session.user.organizationId) {
+  if (isIncubatorRole(session.user.role) && session.user.organizationId) {
     organization = await db.organization.findUnique({
       where: { id: session.user.organizationId },
       select: {
@@ -95,7 +96,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (section === "organization") {
-      if (session.user.role !== "INCUBATOR_ADMIN") {
+      if (!isIncubatorRole(session.user.role)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 

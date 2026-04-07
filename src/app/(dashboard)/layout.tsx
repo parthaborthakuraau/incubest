@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { MobileLayout } from "@/components/dashboard/mobile-layout";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 export default async function DashboardLayout({
   children,
@@ -15,8 +16,7 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const role =
-    session.user.role === "INCUBATOR_ADMIN" ? "incubator" : "startup";
+  const role = isIncubatorRole(session.user.role) ? "incubator" : "startup";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sessionUser = session.user as any;

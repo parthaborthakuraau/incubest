@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isIncubatorRole } from "@/lib/roles";
 
 // Get all job categories for the org
 export async function GET() {
@@ -11,7 +12,7 @@ export async function GET() {
 
   let orgId: string | undefined;
 
-  if (session.user.role === "INCUBATOR_ADMIN") {
+  if (isIncubatorRole(session.user.role)) {
     orgId = session.user.organizationId!;
   } else if (session.user.role === "STARTUP_FOUNDER") {
     const startup = await db.startup.findFirst({
@@ -39,7 +40,7 @@ export async function GET() {
 // Create a new job category (INCUBATOR_ADMIN only)
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

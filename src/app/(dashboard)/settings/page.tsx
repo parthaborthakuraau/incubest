@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/ui/back-button";
 import { User, Building2, Lock, Save, CheckCircle2, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { isIncubatorRole } from "@/lib/roles";
 
 interface UserData {
   id: string;
@@ -177,7 +178,7 @@ export default function SettingsPage() {
     );
   }
 
-  const isAdmin = user?.role === "INCUBATOR_ADMIN";
+  const isAdmin = isIncubatorRole(user?.role);
 
   return (
     <div className="space-y-6">

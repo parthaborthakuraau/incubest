@@ -31,7 +31,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h2>
               <p>
-                By accessing or using Incubest (&quot;the Platform&quot;), operated by Incubest (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, you may not access or use the Platform. These terms apply to all users, including incubator administrators, team members, startup founders, mentors, and grantors.
+                By accessing or using Incubest (&quot;the Platform&quot;), operated by Foundation of AIC-AAU Incubator (NEATEHUB) (CIN: U74999AS2018NPL018729) (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, you may not access or use the Platform. These terms apply to all users, including incubator administrators, team members, startup founders, mentors, and grantors.
               </p>
             </section>
 
@@ -145,7 +145,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-gray-900 mb-3">13. Governing Law & Disputes</h2>
               <p>
-                These terms are governed by the laws of India. Any disputes arising from these terms or your use of the Platform shall be subject to the exclusive jurisdiction of the courts in Guwahati, Assam, India.
+                These terms are governed by the laws of India. Any disputes arising from these terms or your use of the Platform shall be subject to the exclusive jurisdiction of the courts in Jorhat, Assam, India.
               </p>
             </section>
 
@@ -162,9 +162,11 @@ export default function TermsPage() {
                 If you have any questions about these Terms of Service, please contact us at:
               </p>
               <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-5">
-                <p className="font-semibold text-gray-900">Incubest</p>
-                <p>Email: <a href="mailto:aau.incubator@gmail.com" className="text-emerald-600 hover:underline">aau.incubator@gmail.com</a></p>
-                <p>Guwahati, Assam, India</p>
+                <p className="font-semibold text-gray-900">Foundation of AIC-AAU Incubator (NEATEHUB)</p>
+                <p className="text-sm text-gray-500 mt-1">CIN: U74999AS2018NPL018729</p>
+                <p className="mt-2">North East Agriculture Technology Entrepreneurs Hub (NEATEHUB)</p>
+                <p>Assam Agricultural University, Jorhat - 785013, Assam, India</p>
+                <p className="mt-2">Email: <a href="mailto:aau.incubator@gmail.com" className="text-emerald-600 hover:underline">aau.incubator@gmail.com</a></p>
               </div>
             </section>
           </div>

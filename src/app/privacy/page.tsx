@@ -31,7 +31,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-semibold text-gray-900 mb-3">1. Introduction</h2>
               <p>
-                Incubest (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates the website <strong>incubest.com</strong> and provides a SaaS platform for incubator and startup management. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
+                Incubest (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), a product of Foundation of AIC-AAU Incubator (NEATEHUB) (CIN: U74999AS2018NPL018729), operates the website <strong>incubest.com</strong> and provides a SaaS platform for incubator and startup management. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
               </p>
             </section>
 
@@ -136,9 +136,11 @@ export default function PrivacyPage() {
                 If you have any questions about this Privacy Policy or our data practices, please contact us at:
               </p>
               <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-5">
-                <p className="font-semibold text-gray-900">Incubest</p>
-                <p>Email: <a href="mailto:aau.incubator@gmail.com" className="text-emerald-600 hover:underline">aau.incubator@gmail.com</a></p>
-                <p>Guwahati, Assam, India</p>
+                <p className="font-semibold text-gray-900">Foundation of AIC-AAU Incubator (NEATEHUB)</p>
+                <p className="text-sm text-gray-500 mt-1">CIN: U74999AS2018NPL018729</p>
+                <p className="mt-2">North East Agriculture Technology Entrepreneurs Hub (NEATEHUB)</p>
+                <p>Assam Agricultural University, Jorhat - 785013, Assam, India</p>
+                <p className="mt-2">Email: <a href="mailto:aau.incubator@gmail.com" className="text-emerald-600 hover:underline">aau.incubator@gmail.com</a></p>
               </div>
             </section>
           </div>

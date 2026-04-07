@@ -624,9 +624,9 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-12 sm:mt-16 pt-8 border-t border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="mt-12 sm:mt-16 pt-8 border-t border-emerald-800 flex flex-col items-center gap-3 text-center">
             <p className="text-xs text-emerald-400">&copy; {new Date().getFullYear()} Incubest. All rights reserved.</p>
-            <p className="text-xs text-emerald-500">Made in India for India's incubation ecosystem</p>
+            <p className="text-xs text-emerald-500">Proudly powered by Foundation of AIC-AAU Incubator (NEATEHUB)</p>
           </div>
         </div>
       </footer>

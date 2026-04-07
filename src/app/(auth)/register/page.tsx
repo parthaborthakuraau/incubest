@@ -189,6 +189,13 @@ export default function RegisterPage() {
             Already have an account?{" "}
             <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">Sign in</Link>
           </p>
+
+          {/* Legal links */}
+          <div className="mt-6 flex items-center justify-center gap-4 text-xs text-gray-400 animate-slideUp" style={{ animationDelay: "0.4s" }}>
+            <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
+            <span>&middot;</span>
+            <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
 

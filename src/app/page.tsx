@@ -235,9 +235,9 @@ export default function LandingPage() {
             <span className="text-xs text-gray-400">— The OS for Incubators</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-gray-500">
-            <a href="#" className="hover:text-gray-700">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-700">Terms of Service</a>
-            <a href="mailto:hello@incubest.in" className="hover:text-gray-700">Contact</a>
+            <Link href="/privacy" className="hover:text-gray-700">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-gray-700">Terms of Service</Link>
+            <a href="mailto:aau.incubator@gmail.com" className="hover:text-gray-700">Contact</a>
           </div>
           <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} Incubest. All rights reserved.</p>
         </div>

@@ -500,7 +500,7 @@ function FormResponses({ form, onBack }: { form: FormData; onBack: () => void })
                     </div>
                   )}
                   {summary.type === "number" && "sum" in summary && (
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div><p className="text-2xl font-bold text-gray-900">{((summary as {sum:number}).sum || 0).toLocaleString("en-IN")}</p><p className="text-xs text-gray-500">Total</p></div>
                       <div><p className="text-2xl font-bold text-gray-900">{((summary as {avg:number}).avg || 0).toLocaleString("en-IN")}</p><p className="text-xs text-gray-500">Average</p></div>
                       <div><p className="text-2xl font-bold text-gray-900">{(summary as {count:number}).count}</p><p className="text-xs text-gray-500">Responses</p></div>

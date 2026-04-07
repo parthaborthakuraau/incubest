@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Privacy Policy — Incubest",
-  description: "Privacy Policy for Incubest — The OS for Incubators",
+  title: "Privacy Policy | Incubest",
+  description: "Privacy Policy for Incubest - The OS for Incubators",
 };
 
 export default function PrivacyPage() {
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
                 <li>Correct inaccurate or incomplete data.</li>
                 <li>Request deletion of your personal data.</li>
                 <li>Object to or restrict processing of your data.</li>
-                <li>Data portability — receive your data in a structured, machine-readable format.</li>
+                <li>Data portability - receive your data in a structured, machine-readable format.</li>
                 <li>Withdraw consent at any time where processing is based on consent.</li>
               </ul>
             </section>

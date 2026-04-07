@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Incubest — The OS for Incubators",
+  title: "Incubest | The OS for Indian startup incubators",
   description:
-    "AI-first platform for startup incubators. Replace spreadsheets, WhatsApp groups, and scattered emails with a single system.",
+    "AI-powered platform for startup incubators. Manage programs, track startups, generate grantor reports - all in one place.",
   icons: { icon: "/dark.svg" },
 };
 

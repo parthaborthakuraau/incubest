@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Terms of Service — Incubest",
-  description: "Terms of Service for Incubest — The OS for Incubators",
+  title: "Terms of Service | Incubest",
+  description: "Terms of Service for Incubest - The OS for Incubators",
 };
 
 export default function TermsPage() {

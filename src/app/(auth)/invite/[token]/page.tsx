@@ -159,9 +159,9 @@ export default function InvitePage() {
               <Input label="Website" name="website" type="url" />
 
               <p className="text-xs font-medium text-gray-500 pt-2">
-                Registration Details (optional — helps detect cross-incubator overlap)
+                Registration Details (optional - helps detect cross-incubator overlap)
               </p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Input label="DPIIT No." name="dpiitNumber" placeholder="DIPP12345" />
                 <Input label="CIN" name="cinNumber" placeholder="U72XXX..." />
                 <Input label="PAN" name="panNumber" placeholder="AAAAA1234A" />

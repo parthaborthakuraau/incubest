@@ -160,7 +160,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Incubator Management</p>
-                  <p className="text-xs text-gray-500">Programs, cohorts, reports — unified</p>
+                  <p className="text-xs text-gray-500">Programs, cohorts, reports - unified</p>
                 </div>
               </div>
             </div>

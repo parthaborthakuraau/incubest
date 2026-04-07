@@ -55,7 +55,7 @@ export default function TasksPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
         <p className="text-sm text-gray-500">
-          Everything you need to do — reports, data requests, milestones
+          Everything you need to do - reports, data requests, milestones
         </p>
       </div>
 

@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
@@ -11,13 +10,13 @@ interface StatCardProps {
 }
 
 const COLOR_MAP = {
-  blue: { bg: "bg-blue-50", icon: "bg-blue-100 text-blue-600", border: "border-blue-100" },
-  green: { bg: "bg-emerald-50", icon: "bg-emerald-100 text-emerald-600", border: "border-emerald-100" },
-  purple: { bg: "bg-violet-50", icon: "bg-violet-100 text-violet-600", border: "border-violet-100" },
-  orange: { bg: "bg-orange-50", icon: "bg-orange-100 text-orange-600", border: "border-orange-100" },
-  pink: { bg: "bg-pink-50", icon: "bg-pink-100 text-pink-600", border: "border-pink-100" },
-  teal: { bg: "bg-teal-50", icon: "bg-teal-100 text-teal-600", border: "border-teal-100" },
-  default: { bg: "bg-white", icon: "bg-gray-100 text-gray-600", border: "border-gray-200/80" },
+  blue: { iconBg: "#D4FF3A18", iconColor: "#8A9A00" },
+  green: { iconBg: "#10B98118", iconColor: "#10B981" },
+  purple: { iconBg: "#8B5CF618", iconColor: "#8B5CF6" },
+  orange: { iconBg: "#FF7A4518", iconColor: "#FF7A45" },
+  pink: { iconBg: "#EC489918", iconColor: "#EC4899" },
+  teal: { iconBg: "#14B8A618", iconColor: "#14B8A6" },
+  default: { iconBg: "#D4FF3A18", iconColor: "#8A9A00" },
 };
 
 export function StatCard({
@@ -31,29 +30,46 @@ export function StatCard({
   const c = COLOR_MAP[color];
 
   return (
-    <div className={cn(
-      "rounded-2xl border p-6 shadow-[0_1px_2px_rgba(0,0,0,0.03),0_4px_12px_rgba(0,0,0,0.03)] transition-all",
-      c.bg, c.border
-    )}>
+    <div
+      className="rounded-2xl p-5 transition-all hover:-translate-y-0.5"
+      style={{
+        backgroundColor: "#fff",
+        border: "1px solid rgba(0,0,0,0.06)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      }}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+          <p
+            className="text-xs font-medium uppercase tracking-wider"
+            style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8A8A82", letterSpacing: "0.08em" }}
+          >
+            {title}
+          </p>
+          <p
+            className="mt-2 text-3xl font-normal"
+            style={{ fontFamily: "'Instrument Serif', serif", color: "#0A0A0A", lineHeight: 1 }}
+          >
+            {value}
+          </p>
           {change && (
             <p
-              className={cn(
-                "mt-1 text-xs",
-                changeType === "positive" && "text-green-600",
-                changeType === "negative" && "text-red-600",
-                changeType === "neutral" && "text-gray-500"
-              )}
+              className="mt-2 text-xs font-semibold"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: "0.04em",
+                color: changeType === "positive" ? "#10B981" : changeType === "negative" ? "#FF7A45" : "#8A8A82",
+              }}
             >
               {change}
             </p>
           )}
         </div>
-        <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", c.icon)}>
-          <Icon className="h-5 w-5" />
+        <div
+          className="flex h-11 w-11 items-center justify-center rounded-xl"
+          style={{ backgroundColor: c.iconBg }}
+        >
+          <Icon className="h-5 w-5" style={{ color: c.iconColor }} />
         </div>
       </div>
     </div>

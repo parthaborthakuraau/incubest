@@ -92,44 +92,84 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
     return pathname === href || pathname.startsWith(href + "/");
   }
 
-  const w = collapsed ? "w-[72px]" : "w-[240px]";
-
+  const w = collapsed ? "w-[72px]" : "w-[248px]";
   const isStartup = role === "startup";
-  const sidebarBg = isStartup ? "bg-white border-gray-200/80" : "bg-[#e8e8e3] border-black/5";
 
   return (
-    <aside className={cn("flex h-screen flex-col border-r transition-all duration-300", sidebarBg, w)}>
+    <aside
+      className={cn("flex h-screen flex-col border-r transition-all duration-300", w)}
+      style={{
+        backgroundColor: isStartup ? "#fff" : "#F4F1EA",
+        borderColor: "rgba(0,0,0,0.08)",
+        fontFamily: "'Geist', sans-serif",
+      }}
+    >
       {/* Logo row */}
       <div className="flex h-14 items-center justify-between px-3">
         <Link href={role === "incubator" ? "/incubator/dashboard" : "/startup"} className="flex items-center gap-2.5 overflow-hidden">
-          <img src="/dark.svg" alt="Incubest" className="h-8 w-8 shrink-0 rounded-xl" />
-          {!collapsed && <span className="text-sm font-bold text-gray-900 truncate">Incubest</span>}
+          {/* Brand mark */}
+          <div className="relative h-[26px] w-[26px] rounded-md shrink-0 overflow-hidden" style={{ backgroundColor: "#0A0A0A" }}>
+            <div className="absolute inset-0" style={{
+              background: "repeating-linear-gradient(45deg, transparent, transparent 3px, #D4FF3A 3px, #D4FF3A 5px)",
+            }} />
+          </div>
+          {!collapsed && (
+            <span className="text-[15px] font-semibold tracking-tight" style={{ color: "#0A0A0A" }}>Incubest</span>
+          )}
         </Link>
-        <button onClick={toggleCollapse} className="rounded-lg p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 transition-colors shrink-0">
+        <button onClick={toggleCollapse} className="rounded-lg p-1.5 transition-colors shrink-0 hover:bg-black/5" style={{ color: "#8A8A82" }}>
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
       </div>
 
-      {/* Role badge for team members */}
+      {/* Role badge */}
       {!collapsed && role === "incubator" && teamRole && (
         <div className="px-3 pb-1">
-          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${teamRole === "ADMIN" ? "bg-violet-100 text-violet-700" : "bg-blue-100 text-blue-700"}`}>
+          <span
+            className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: "0.06em",
+              backgroundColor: teamRole === "ADMIN" ? "#D4FF3A20" : "#10B98120",
+              color: teamRole === "ADMIN" ? "#5a7a00" : "#10B981",
+            }}
+          >
             {teamRole === "ADMIN" ? "Admin" : "Team Member"}
           </span>
         </div>
       )}
 
-      {/* +New Chat */}
+      {/* +New Chat button */}
       {((role === "incubator" && !isInProgram && !isMember) || role === "startup") && (
         <div className="px-3 pb-2">
           <Link href="/chat?new=1">
             {collapsed ? (
-              <div className={`flex h-9 w-full items-center justify-center rounded-xl text-white transition-all ${isStartup ? "bg-emerald-600 hover:bg-emerald-700" : "bg-gray-900 hover:bg-gray-800"}`}>
+              <div
+                className="flex h-9 w-full items-center justify-center rounded-xl text-white transition-all hover:-translate-y-0.5"
+                style={{ backgroundColor: "#0A0A0A" }}
+              >
                 <Plus className="h-4 w-4" />
               </div>
             ) : (
-              <div className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all ${isStartup ? "bg-emerald-600 hover:bg-emerald-700" : "bg-gray-900 hover:bg-gray-800"}`}>
-                <Plus className="h-4 w-4" /> {isStartup ? "Chat" : "New Chat"}
+              <div
+                className="relative flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all overflow-hidden hover:-translate-y-0.5"
+                style={{
+                  backgroundColor: "#0A0A0A",
+                  color: "#fff",
+                  boxShadow: "0 4px 12px -4px rgba(0,0,0,0.3)",
+                }}
+              >
+                <span
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold"
+                  style={{ backgroundColor: "#D4FF3A", color: "#0A0A0A" }}
+                >+</span>
+                New chat
+                <span
+                  className="ml-auto text-[10px] opacity-50"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Ctrl+N
+                </span>
               </div>
             )}
           </Link>
@@ -139,27 +179,30 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
       {/* Program context */}
       {isInProgram && !collapsed && (
         <div className="px-3 pb-2">
-          <Link href="/incubator/programs" className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-0.5">
+          <Link href="/incubator/programs" className="flex items-center gap-1 text-xs hover:opacity-70 mb-0.5" style={{ color: "#8A8A82" }}>
             <ArrowLeft className="h-3 w-3" /> All Programs
           </Link>
-          <p className="text-sm font-semibold text-gray-900 truncate">{activeProgramName || "Program"}</p>
+          <p className="text-sm font-semibold truncate" style={{ color: "#0A0A0A" }}>{activeProgramName || "Program"}</p>
         </div>
       )}
       {isInProgram && collapsed && (
         <div className="px-2 pb-2">
-          <Link href="/incubator/programs" className="flex h-9 w-full items-center justify-center rounded-xl text-gray-400 hover:bg-black/5">
+          <Link href="/incubator/programs" className="flex h-9 w-full items-center justify-center rounded-xl hover:bg-black/5" style={{ color: "#8A8A82" }}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </div>
       )}
 
-      <div className="mx-3 border-t border-black/5 mb-2" />
+      <div className="mx-3 mb-2" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }} />
 
-      {/* Member redirect: show assigned program directly */}
+      {/* Member redirect */}
       {isMember && !isInProgram && assignedProgramId && !collapsed && (
         <div className="px-3 pb-2">
           <Link href={`/incubator/programs/${assignedProgramId}`}>
-            <div className="flex items-center justify-center gap-2 rounded-xl bg-blue-50 border border-blue-200 px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-all">
+            <div
+              className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5"
+              style={{ backgroundColor: "#D4FF3A20", border: "1px solid #D4FF3A40", color: "#5a7a00" }}
+            >
               Go to Your Program
             </div>
           </Link>
@@ -170,7 +213,6 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
         {links.map(link => {
           const active = isActive(link.href);
-          // Members can only access their assigned program + settings
           const isRestricted = isMember && !isInProgram && link.href !== "/settings" && link.href !== "/incubator/dashboard";
           return (
             <Link
@@ -181,21 +223,18 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all",
                 collapsed && "justify-center px-0",
-                isRestricted
-                  ? "text-gray-300 cursor-not-allowed"
-                  : active
-                  ? isStartup
-                    ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
-                    : "bg-white text-gray-900 shadow-sm"
-                  : isStartup
-                    ? "text-gray-500 hover:text-emerald-700 hover:bg-emerald-50/50"
-                    : "text-gray-500 hover:text-gray-800 hover:bg-black/5"
               )}
+              style={{
+                color: isRestricted ? "#d4d4cc" : active ? "#0A0A0A" : "#5a5a55",
+                backgroundColor: active ? (isStartup ? "#D4FF3A15" : "#0A0A0A") : "transparent",
+                ...(active && !isStartup ? { color: "#fff" } : {}),
+                cursor: isRestricted ? "not-allowed" : "pointer",
+              }}
             >
-              <link.icon className="h-[18px] w-[18px] shrink-0" />
+              <link.icon className="h-[16px] w-[16px] shrink-0" />
               {!collapsed && <span className="truncate">{link.label}</span>}
               {collapsed && (
-                <span className="absolute left-full ml-3 hidden rounded-lg bg-gray-900 px-2.5 py-1 text-xs font-medium text-white shadow-lg group-hover:block whitespace-nowrap z-50">
+                <span className="absolute left-full ml-3 hidden rounded-lg px-2.5 py-1 text-xs font-medium text-white shadow-lg group-hover:block whitespace-nowrap z-50" style={{ backgroundColor: "#0A0A0A" }}>
                   {link.label}
                 </span>
               )}
@@ -203,21 +242,32 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
           );
         })}
 
-        {/* Programs quick list — members only see their assigned program */}
+        {/* Programs quick list */}
         {role === "incubator" && !isInProgram && programs.length > 0 && !collapsed && (
           <>
             <div className="pt-4 pb-1 px-1">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Programs</p>
+              <p
+                className="text-[10px] font-semibold uppercase"
+                style={{ fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", color: "#8A8A82" }}
+              >
+                My Programs
+              </p>
             </div>
             {programs.filter(p => !isMember || p.id === assignedProgramId).map(p => {
               const active = pathname.startsWith(`/incubator/programs/${p.id}`);
               return (
-                <Link key={p.id} href={`/incubator/programs/${p.id}`} title={collapsed ? p.name : undefined}
-                  className={cn(
-                    "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all",
-                    active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800 hover:bg-black/5"
-                  )}>
-                  <FolderKanban className="h-[18px] w-[18px] shrink-0" />
+                <Link
+                  key={p.id}
+                  href={`/incubator/programs/${p.id}`}
+                  title={collapsed ? p.name : undefined}
+                  className="group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all"
+                  style={{
+                    color: active ? "#0A0A0A" : "#5a5a55",
+                    backgroundColor: active ? "#0A0A0A" : "transparent",
+                    ...(active ? { color: "#fff" } : {}),
+                  }}
+                >
+                  <FolderKanban className="h-[16px] w-[16px] shrink-0" />
                   <span className="truncate">{p.name}</span>
                 </Link>
               );
@@ -227,15 +277,21 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
       </nav>
 
       {/* Bottom */}
-      <div className="mx-3 border-t border-black/5 mb-2" />
+      <div className="mx-3 mb-2" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }} />
       <div className="px-3 pb-3 space-y-0.5">
-        <Link href="/settings" title={collapsed ? "Settings" : undefined}
+        <Link
+          href="/settings"
+          title={collapsed ? "Settings" : undefined}
           className={cn(
             "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all",
             collapsed && "justify-center px-0",
-            pathname === "/settings" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800 hover:bg-black/5"
-          )}>
-          <Settings className="h-[18px] w-[18px] shrink-0" />
+          )}
+          style={{
+            color: pathname === "/settings" ? "#fff" : "#5a5a55",
+            backgroundColor: pathname === "/settings" ? "#0A0A0A" : "transparent",
+          }}
+        >
+          <Settings className="h-[16px] w-[16px] shrink-0" />
           {!collapsed && <span>Settings</span>}
         </Link>
         <ProfileButton collapsed={collapsed} orgName={orgName} />
@@ -251,7 +307,6 @@ function ProfileButton({ collapsed, orgName }: { collapsed: boolean; orgName?: s
   useEffect(() => {
     fetch("/api/settings").then(r => r.json()).then(d => {
       let logo = d.organization?.logo || null;
-      // For startups, try to get startup logo
       if (d.user?.role === "STARTUP_FOUNDER") {
         fetch("/api/startup/dashboard").then(r2 => r2.json()).then(d2 => {
           if (d2.activeStartup?.logo) {
@@ -265,45 +320,66 @@ function ProfileButton({ collapsed, orgName }: { collapsed: boolean; orgName?: s
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} title={collapsed ? (orgName || "Profile") : undefined}
+      <button
+        onClick={() => setOpen(!open)}
+        title={collapsed ? (orgName || "Profile") : undefined}
         className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all w-full text-gray-500 hover:text-gray-800 hover:bg-black/5",
+          "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all w-full hover:bg-black/5",
           collapsed && "justify-center px-0"
-        )}>
+        )}
+        style={{ color: "#5a5a55" }}
+      >
         {profile?.logo ? (
-          <img src={profile.logo} alt="" className="h-6 w-6 rounded-lg object-cover shrink-0" />
+          <img src={profile.logo} alt="" className="h-7 w-7 rounded-lg object-cover shrink-0" />
         ) : (
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gray-200 text-[10px] font-bold text-gray-600 shrink-0">
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-bold shrink-0"
+            style={{ background: "linear-gradient(135deg, #D4FF3A, #A7F3D0)", color: "#0A0A0A" }}
+          >
             {(profile?.name || "?").charAt(0).toUpperCase()}
           </div>
         )}
-        {!collapsed && <span className="truncate text-gray-700">{profile?.name || orgName || "Profile"}</span>}
+        {!collapsed && (
+          <div className="text-left min-w-0">
+            <p className="text-xs font-semibold truncate" style={{ color: "#0A0A0A" }}>{profile?.name || "Profile"}</p>
+            <p className="text-[10px] truncate" style={{ color: "#8A8A82" }}>{orgName || profile?.email}</p>
+          </div>
+        )}
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className={cn(
-            "absolute z-50 rounded-2xl border border-gray-200 bg-white shadow-xl p-4 w-64",
-            collapsed ? "left-full bottom-0 ml-3" : "left-0 bottom-full mb-2"
-          )}>
+          <div
+            className={cn(
+              "absolute z-50 rounded-2xl shadow-xl p-4 w-64",
+              collapsed ? "left-full bottom-0 ml-3" : "left-0 bottom-full mb-2"
+            )}
+            style={{ backgroundColor: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}
+          >
             <div className="flex items-center gap-3 mb-3">
               {profile?.logo ? (
                 <img src={profile.logo} alt="" className="h-10 w-10 rounded-xl object-cover" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-sm font-bold text-gray-600">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold"
+                  style={{ background: "linear-gradient(135deg, #D4FF3A, #A7F3D0)", color: "#0A0A0A" }}
+                >
                   {(profile?.name || "?").charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{profile?.name}</p>
-                <p className="text-[11px] text-gray-500 truncate">{profile?.email}</p>
-                {orgName && <p className="text-[10px] text-gray-400 truncate">{orgName}</p>}
+                <p className="text-sm font-semibold truncate" style={{ color: "#0A0A0A" }}>{profile?.name}</p>
+                <p className="text-[11px] truncate" style={{ color: "#8A8A82" }}>{profile?.email}</p>
+                {orgName && <p className="text-[10px] truncate" style={{ color: "#8A8A82" }}>{orgName}</p>}
               </div>
             </div>
-            <div className="border-t border-gray-100 pt-3">
-              <button onClick={() => { window.location.href = "/api/auth/signout"; }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+            <div className="pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+              <button
+                onClick={() => { window.location.href = "/api/auth/signout"; }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors"
+                style={{ color: "#FF7A45" }}
+              >
                 Sign Out
               </button>
             </div>

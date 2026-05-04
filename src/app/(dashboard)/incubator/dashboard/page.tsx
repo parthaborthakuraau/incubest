@@ -106,21 +106,45 @@ export default async function IncubatorDashboard() {
       ? Math.round((reportedStartupIds.size / totalStartups) * 100)
       : 0;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = session.user.name?.split(" ")[0] || "there";
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Greeting */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Master Dashboard</h1>
-          <p className="text-sm text-gray-500">
-            Overview across all programs &middot; Welcome back, {session.user.name}
+          <p
+            className="text-[10px] font-semibold uppercase tracking-[0.14em] mb-2 flex items-center gap-2"
+            style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8A8A82" }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full inline-block" style={{ backgroundColor: "#10B981", boxShadow: "0 0 0 3px #10B98122" }} />
+            {new Date().toLocaleDateString("en-IN", { weekday: "long" })} - {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long" })}
           </p>
+          <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: "clamp(28px, 4vw, 42px)", lineHeight: 1.05, color: "#0A0A0A" }}>
+            {greeting}, {firstName}.
+          </h1>
         </div>
-        <Link href="/chat">
-          <Button>
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Ask AI
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <div className="rounded-xl px-4 py-2.5 text-center" style={{ backgroundColor: "#fff", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8A8A82" }}>Startups</p>
+            <p className="text-xl font-normal" style={{ fontFamily: "'Instrument Serif', serif", color: "#0A0A0A" }}>{totalStartups}</p>
+          </div>
+          <div className="rounded-xl px-4 py-2.5 text-center" style={{ backgroundColor: "#fff", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8A8A82" }}>Compliance</p>
+            <p className="text-xl font-normal" style={{ fontFamily: "'Instrument Serif', serif", color: "#0A0A0A" }}>{reportingRate}%</p>
+          </div>
+          <Link href="/chat">
+            <div
+              className="flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium transition-all hover:-translate-y-0.5"
+              style={{ backgroundColor: "#0A0A0A", color: "#fff", boxShadow: "0 4px 12px -4px rgba(0,0,0,0.3)" }}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Ask AI
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -200,15 +224,13 @@ export default async function IncubatorDashboard() {
       {/* Programs */}
       {programs.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <FolderKanban className="h-5 w-5 text-brand-600" />
-              Programs
-            </h2>
-            <Link href="/incubator/programs">
-              <Button variant="ghost" size="sm">
-                Manage <ArrowRight className="ml-1 h-3 w-3" />
-              </Button>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: "#0A0A0A" }} />
+              <h2 className="text-[15px] font-semibold" style={{ color: "#0A0A0A" }}>Programs</h2>
+            </div>
+            <Link href="/incubator/programs" className="text-xs font-medium hover:opacity-70 transition-opacity" style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8A8A82" }}>
+              Manage →
             </Link>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -222,23 +244,28 @@ export default async function IncubatorDashboard() {
                   key={program.id}
                   href={`/incubator/programs/${program.id}`}
                 >
-                  <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-gray-300 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_6px_16px_rgba(0,0,0,0.04)]">
-                    <CardContent className="p-5">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">{program.name}</h3>
-                        <Badge variant={program.isActive ? "success" : "secondary"}>
-                          {program.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                      {program.grantor && (
-                        <p className="mt-1 text-xs text-gray-500">{program.grantor}</p>
-                      )}
-                      <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
-                        <span>{startupsInProgram} startups</span>
-                        <span>{program.cohorts.length} cohorts</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer" style={{ backgroundColor: "#fff", border: "1px solid rgba(0,0,0,0.06)" }}>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-[14px]" style={{ color: "#0A0A0A" }}>{program.name}</h3>
+                      <span
+                        className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full"
+                        style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          backgroundColor: program.isActive ? "#D4FF3A20" : "rgba(0,0,0,0.05)",
+                          color: program.isActive ? "#5a7a00" : "#8A8A82",
+                        }}
+                      >
+                        {program.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    {program.grantor && (
+                      <p className="mt-1 text-xs" style={{ color: "#8A8A82" }}>{program.grantor}</p>
+                    )}
+                    <div className="mt-3 flex items-center gap-4 text-xs" style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8A8A82", letterSpacing: "0.04em" }}>
+                      <span>{startupsInProgram} startups</span>
+                      <span>{program.cohorts.length} cohorts</span>
+                    </div>
+                  </div>
                 </Link>
               );
             })}

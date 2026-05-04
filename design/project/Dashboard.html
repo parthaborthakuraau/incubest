@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard · Incubest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A;
+  --ink-2:#111111;
+  --ink-3:#161616;
+  --bone:#F4F1EA;
+  --paper:#FBFAF6;
+  --muted:#8A8A82;
+  --muted-2:#5a5a55;
+  --line:#0000000d;
+  --line-strong:#00000018;
+  --line-dark:#ffffff14;
+  --lime:#D4FF3A;
+  --lime-deep:#B5E300;
+  --mint:#10B981;
+  --warn:#FF7A45;
+  --rose:#F43F5E;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:var(--paper);color:var(--ink);font-family:'Geist','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+input,textarea{font-family:inherit}
+::selection{background:var(--lime);color:var(--ink)}
+
+.app{display:grid;grid-template-columns:248px 1fr 320px;height:100vh;width:100vw}
+
+/* —— SIDEBAR —— */
+.side{background:#F4F1EA;border-right:1px solid var(--line-strong);display:flex;flex-direction:column;padding:14px 12px;overflow:hidden}
+.side .head{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 14px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px;letter-spacing:-0.02em}
+.bm{width:26px;height:26px;border-radius:7px;background:var(--ink);position:relative;display:grid;place-items:center;flex-shrink:0}
+.bm::before,.bm::after{content:"";position:absolute;left:50%;top:50%;background:var(--lime);border-radius:1px}
+.bm::before{width:12px;height:2.5px;transform:translate(-50%,-160%) rotate(-30deg)}
+.bm::after{width:12px;height:2.5px;transform:translate(-50%,60%) rotate(30deg)}
+.collapse{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--muted)}
+.collapse:hover{background:#0000000a;color:var(--ink)}
+
+.new-chat{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;padding:11px 14px;border-radius:11px;font-size:13.5px;font-weight:500;margin-bottom:14px;transition:all .15s;position:relative;overflow:hidden}
+.new-chat::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,#D4FF3A30 50%,transparent 70%);transform:translateX(-100%);transition:transform .8s}
+.new-chat:hover::before{transform:translateX(100%)}
+.new-chat:hover{transform:translateY(-1px);box-shadow:0 8px 22px -8px #00000060}
+.new-chat .plus{width:14px;height:14px;border-radius:50%;background:var(--lime);color:var(--ink);display:grid;place-items:center;font-size:14px;font-weight:600;line-height:1}
+
+.nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;padding-right:2px;flex:1;margin-right:-4px}
+.nav::-webkit-scrollbar{width:6px}
+.nav::-webkit-scrollbar-thumb{background:#00000018;border-radius:3px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:13.5px;color:#3a3a35;font-weight:500;transition:all .12s;position:relative;cursor:pointer}
+.nav-item:hover{background:#0000000a;color:var(--ink)}
+.nav-item.active{background:var(--ink);color:#fff}
+.nav-item.active .badge{background:var(--lime);color:var(--ink)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.85}
+.nav-item .badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:#0000000d;color:var(--muted)}
+.nav-section{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:14px 10px 6px}
+
+.user{margin-top:auto;padding:10px;background:#fff;border:1px solid var(--line-strong);border-radius:13px;display:flex;align-items:center;gap:10px}
+.user .av{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--lime),#A7F3D0);display:grid;place-items:center;font-weight:700;color:var(--ink);font-size:14px}
+.user .info{flex:1;min-width:0}
+.user .n{font-size:12.5px;font-weight:600;line-height:1.15}
+.user .o{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user .gear{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--muted)}
+.user .gear:hover{background:#0000000a;color:var(--ink)}
+
+/* —— MAIN —— */
+.main{display:flex;flex-direction:column;background:var(--paper);overflow:hidden;position:relative}
+.main::before{content:"";position:absolute;top:-100px;right:-100px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,#D4FF3A22,transparent 60%);filter:blur(60px);pointer-events:none}
+
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--line-strong);background:var(--paper)cc;backdrop-filter:blur(8px);position:relative;z-index:2}
+.search{flex:1;max-width:520px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line-strong);border-radius:11px;padding:9px 14px;font-size:13.5px;color:var(--muted-2);transition:all .15s;cursor:text}
+.search:hover,.search:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px #00000010}
+.search svg{width:15px;height:15px;color:var(--muted)}
+.search input{flex:1;border:0;outline:0;background:transparent;font-size:13.5px;color:var(--ink)}
+.search .kbd{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);background:#0000000a;padding:2px 7px;border-radius:5px;border:1px solid var(--line-strong);margin-left:auto}
+.tb-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;font-size:13px;font-weight:500;transition:all .12s;border:1px solid transparent}
+.tb-btn:hover{background:#0000000a}
+.tb-btn.outline{border-color:var(--line-strong);background:#fff}
+.tb-btn.outline:hover{background:#fff;border-color:var(--ink)}
+.tb-btn svg{width:14px;height:14px}
+.tb-icon{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:var(--ink);transition:all .12s;position:relative}
+.tb-icon:hover{background:#0000000a}
+.tb-icon .red-dot{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--rose);border:1.5px solid var(--paper)}
+.tb-icon svg{width:16px;height:16px}
+
+/* hero canvas */
+.canvas{flex:1;overflow-y:auto;padding:28px 28px 0;position:relative;z-index:1}
+.canvas::-webkit-scrollbar{width:8px}
+.canvas::-webkit-scrollbar-thumb{background:#00000018;border-radius:4px}
+
+/* greeting */
+.hello{margin-top:18px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:18px}
+.hello .greet{flex:1}
+.hello .eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:8px;margin-bottom:8px}
+.hello .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 4px #10B98122}
+.hello h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:54px;line-height:1.0;letter-spacing:-0.025em;margin:0;color:var(--ink)}
+.hello h1 em{font-style:italic;color:var(--muted-2)}
+.hello h1 .accent{font-style:italic;color:var(--ink);position:relative;display:inline-block}
+.hello h1 .accent::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:10px;background:var(--lime);z-index:-1;border-radius:3px}
+.hello .quick{display:flex;gap:10px}
+.hello .qstat{background:#fff;border:1px solid var(--line-strong);border-radius:13px;padding:11px 16px;display:flex;flex-direction:column;gap:2px;min-width:130px}
+.hello .qstat .l{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.hello .qstat .v{font-family:'Instrument Serif',serif;font-size:26px;line-height:1;color:var(--ink)}
+.hello .qstat .v .pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mint);font-weight:600;margin-left:4px}
+
+/* ai input — the centerpiece */
+.ai-card{background:var(--ink);border-radius:22px;padding:22px;color:#fff;position:relative;overflow:hidden;box-shadow:0 30px 60px -30px #00000060, 0 1px 0 #ffffff10 inset}
+.ai-card::before{content:"";position:absolute;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,#D4FF3A20,transparent 65%);filter:blur(40px);top:-100px;right:-50px;pointer-events:none}
+.ai-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative}
+.ai-row .left{display:flex;align-items:center;gap:10px}
+.ai-mark{width:30px;height:30px;border-radius:9px;background:var(--lime);color:var(--ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+.ai-row .title{font-size:14px;font-weight:600;color:#fff}
+.ai-row .sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a9a92;letter-spacing:.06em}
+.ai-status{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--lime);letter-spacing:.06em}
+.ai-status .pulse{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 0 rgba(212,255,58,.5);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,255,58,.6)}70%{box-shadow:0 0 0 8px rgba(212,255,58,0)}100%{box-shadow:0 0 0 0 rgba(212,255,58,0)}}
+
+.ai-input-wrap{background:#161616;border:1px solid #ffffff14;border-radius:16px;padding:16px 16px 12px;transition:all .15s;position:relative}
+.ai-input-wrap:focus-within{border-color:#D4FF3A60;box-shadow:0 0 0 3px #D4FF3A20}
+.ai-input-wrap textarea{width:100%;background:transparent;border:0;outline:0;color:#fff;font-size:15.5px;font-family:inherit;resize:none;line-height:1.5;min-height:54px}
+.ai-input-wrap textarea::placeholder{color:#5a5a55}
+.ai-controls{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.ai-controls .left{display:flex;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;background:#ffffff08;color:#cfcfc8;font-size:11.5px;font-weight:500;border:1px solid #ffffff10;transition:all .12s}
+.chip:hover{background:#ffffff14;color:#fff}
+.chip svg{width:12px;height:12px}
+.send{width:36px;height:36px;border-radius:11px;background:var(--lime);color:var(--ink);display:grid;place-items:center;transition:all .15s}
+.send:hover{transform:translateY(-1px) rotate(-5deg);box-shadow:0 8px 20px -6px #D4FF3A60}
+.send svg{width:16px;height:16px}
+
+/* prompt suggestions */
+.prompts{margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}
+.prompt{background:#ffffff06;border:1px solid #ffffff14;border-radius:13px;padding:14px;cursor:pointer;transition:all .15s;text-align:left;display:flex;flex-direction:column;gap:8px;min-height:96px}
+.prompt:hover{background:#ffffff10;border-color:#D4FF3A60;transform:translateY(-2px)}
+.prompt .ic{width:26px;height:26px;border-radius:8px;background:#D4FF3A18;color:var(--lime);display:grid;place-items:center}
+.prompt .ic svg{width:13px;height:13px}
+.prompt .t{font-size:13px;color:#e9e7e0;line-height:1.35;font-weight:500}
+.prompt .arrow{margin-top:auto;display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:#7a7a72;letter-spacing:.06em}
+
+/* widget grid below */
+.grid{margin-top:22px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;padding-bottom:28px}
+
+.widget{background:#fff;border:1px solid var(--line-strong);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;position:relative}
+.widget .hd{display:flex;align-items:center;justify-content:space-between}
+.widget .hd .t{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.widget .hd .more{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--muted);transition:all .12s}
+.widget .hd .more:hover{background:#0000000a;color:var(--ink)}
+.widget .hd .meta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+
+/* portfolio chart */
+.chart{position:relative;height:160px}
+.chart svg{width:100%;height:100%;overflow:visible}
+.chart-foot{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px dashed var(--line-strong);font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:.04em}
+.chart-foot .legend{display:flex;gap:14px;align-items:center}
+.legend .dot{display:inline-flex;align-items:center;gap:6px}
+.legend .dot::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--ink)}
+.legend .lime::before{background:var(--lime)}
+
+/* startups list */
+.startups{display:flex;flex-direction:column;gap:0}
+.s-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.s-row:last-child{border-bottom:0}
+.s-row .av{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:600;font-size:11px;color:var(--ink)}
+.s-row .info{flex:1;min-width:0}
+.s-row .n{font-size:13px;font-weight:600}
+.s-row .s{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.04em}
+.s-row .v{font-size:13px;font-weight:600;text-align:right}
+.s-row .delta{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:99px;letter-spacing:.02em;margin-left:8px}
+.delta.good{background:#10B98115;color:var(--mint)}
+.delta.hot{background:#D4FF3A30;color:#5a7a00}
+.delta.warn{background:#FF7A4515;color:var(--warn)}
+
+/* tasks */
+.tasks{display:flex;flex-direction:column;gap:8px}
+.task{display:flex;align-items:flex-start;gap:10px;padding:10px;background:#FBFAF6;border-radius:10px;border:1px solid var(--line)}
+.task .cb{width:18px;height:18px;border-radius:5px;border:1.5px solid #00000026;flex-shrink:0;margin-top:1px;display:grid;place-items:center;cursor:pointer;transition:all .12s}
+.task .cb.done{background:var(--lime);border-color:var(--lime)}
+.task .cb.done svg{display:block}
+.task .cb svg{width:11px;height:11px;color:var(--ink);display:none}
+.task .body{flex:1;min-width:0}
+.task .body .t{font-size:12.5px;font-weight:500;line-height:1.35}
+.task.done .body .t{text-decoration:line-through;color:var(--muted)}
+.task .body .m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.04em;margin-top:3px;display:flex;align-items:center;gap:8px}
+.task .body .m .pri{padding:1px 6px;border-radius:4px;font-weight:600}
+.task .body .m .pri.high{background:#FF7A4520;color:var(--warn)}
+.task .body .m .pri.med{background:#0000000a;color:var(--muted-2)}
+
+/* —— RIGHT PANEL —— */
+.right{background:#fff;border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow:hidden}
+.right .hd{padding:18px 20px 14px;border-bottom:1px solid var(--line-strong);display:flex;align-items:center;justify-content:space-between}
+.right .hd .t{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.right .hd .new{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mint);background:#10B98115;padding:2px 7px;border-radius:99px;font-weight:600;letter-spacing:.04em}
+.right .body{flex:1;overflow-y:auto;padding:14px 16px}
+.right .body::-webkit-scrollbar{width:6px}
+.right .body::-webkit-scrollbar-thumb{background:#00000018;border-radius:3px}
+
+.section-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin:6px 4px 8px}
+.chat-row{padding:10px;border-radius:10px;cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:4px}
+.chat-row:hover{background:#FBFAF6;border-color:var(--line-strong)}
+.chat-row.active{background:#FBFAF6;border-color:var(--line-strong)}
+.chat-row .t{font-size:12.5px;font-weight:600;line-height:1.3;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chat-row .meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.02em;display:flex;justify-content:space-between}
+
+.activity-row{display:flex;gap:10px;padding:10px;border-radius:10px}
+.activity-row:hover{background:#FBFAF6}
+.activity-row .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:#0000000a}
+.activity-row .ic svg{width:13px;height:13px;color:var(--ink)}
+.activity-row .ic.lime{background:#D4FF3A30;color:#5a7a00}
+.activity-row .ic.mint{background:#10B98118;color:var(--mint)}
+.activity-row .ic.warn{background:#FF7A4518;color:var(--warn)}
+.activity-row .body{flex:1;min-width:0}
+.activity-row .body .t{font-size:12.5px;line-height:1.4}
+.activity-row .body .t b{font-weight:600}
+.activity-row .body .m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.04em}
+
+.upcoming{padding:14px;background:linear-gradient(135deg,var(--ink) 0%,#1a1a1a 100%);border-radius:14px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden}
+.upcoming::before{content:"";position:absolute;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,#D4FF3A28,transparent 65%);filter:blur(30px);top:-50px;right:-30px}
+.upcoming .l{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--lime);letter-spacing:.12em;text-transform:uppercase;position:relative}
+.upcoming .t{font-family:'Instrument Serif',serif;font-size:22px;line-height:1.1;margin:6px 0 4px;color:#fff;position:relative}
+.upcoming .when{font-size:12px;color:#bdbdb6;margin-bottom:12px;position:relative}
+.upcoming .cta{display:inline-flex;align-items:center;gap:6px;background:var(--lime);color:var(--ink);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;position:relative}
+.upcoming .cta:hover{background:#fff}
+
+@media(max-width:1280px){
+  .app{grid-template-columns:220px 1fr 280px}
+  .prompts{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr 1fr}
+  .grid .widget:first-child{grid-column:span 2}
+}
+@media(max-width:980px){
+  .app{grid-template-columns:1fr}
+  .side,.right{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ========= SIDEBAR ========= -->
+  <aside class="side">
+    <div class="head">
+      <a href="Incubest Landing.html" class="brand">
+        <span class="bm"></span>
+        <span>Incubest</span>
+      </a>
+      <button class="collapse" title="Collapse">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+
+    <button class="new-chat">
+      <span class="plus">+</span>
+      New chat
+      <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.7">⌘N</span>
+    </button>
+
+    <nav class="nav">
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+        Programs <span class="badge">12</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/><circle cx="17" cy="8" r="2"/><path d="M21 21v-.5a4 4 0 0 0-3-3.87"/></svg>
+        All Cohorts
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>
+        Passport Search
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m22 11-3 3-2-2"/></svg>
+        Mentors
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Events <span class="badge">3</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a2 2 0 0 0 2 2h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>
+        Forms
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+        Services
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Infrastructure
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18M18 3v18M2 8h20M2 16h20"/></svg>
+        Alumni
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v4h-4"/></svg>
+        Impact
+      </div>
+
+      <div class="nav-section">My Programs</div>
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Phase 3</div>
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> General Incubation</div>
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> NEATEHUB</div>
+
+      <div class="nav-section">Workspace</div>
+      <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</div>
+    </nav>
+
+    <div class="user">
+      <div class="av">R</div>
+      <div class="info">
+        <div class="n">Rajesh Kumar</div>
+        <div class="o">AAU Incubation · Pro</div>
+      </div>
+      <button class="gear">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========= MAIN ========= -->
+  <main class="main">
+    <header class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input placeholder="Search startups, programs, reports…"/>
+        <span class="kbd">⌘K</span>
+      </div>
+      <div class="tb-actions">
+        <button class="tb-btn outline">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          Invite team
+        </button>
+        <button class="tb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </button>
+        <button class="tb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+          <span class="red-dot"></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="canvas">
+
+      <!-- greeting -->
+      <div class="hello">
+        <div class="greet">
+          <div class="eyebrow"><span class="dot"></span> Tuesday · 4 May · Q1 wrap-up week</div>
+          <h1>Good evening, Rajesh.<br/><em>What would you like to</em> <span class="accent">know?</span></h1>
+        </div>
+        <div class="quick">
+          <div class="qstat"><span class="l">Active startups</span><span class="v">42 <span class="pct">+3</span></span></div>
+          <div class="qstat"><span class="l">Reports compliance</span><span class="v">89% <span class="pct">+5%</span></span></div>
+          <div class="qstat"><span class="l">Cohorts running</span><span class="v">6</span></div>
+        </div>
+      </div>
+
+      <!-- AI input -->
+      <section class="ai-card">
+        <div class="ai-row">
+          <div class="left">
+            <div class="ai-mark">IB</div>
+            <div>
+              <div class="title">Incubest AI</div>
+              <div class="sub">Knows everything about your portfolio</div>
+            </div>
+          </div>
+          <div class="ai-status"><span class="pulse"></span> CONNECTED · Q1 2026 DATA</div>
+        </div>
+
+        <div class="ai-input-wrap">
+          <textarea placeholder="Ask anything about your startups, programs, or grantor reports…" id="prompt"></textarea>
+          <div class="ai-controls">
+            <div class="left">
+              <button class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg> Attach</button>
+              <button class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a2 2 0 0 0 2 2h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> Reference</button>
+              <button class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> This quarter</button>
+            </div>
+            <button class="send" id="send-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="prompts">
+          <button class="prompt">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v4h-4"/></svg></div>
+            <div class="t">Which startups haven't reported this month?</div>
+            <div class="arrow"><span>3 flagged</span><span>→</span></div>
+          </button>
+          <button class="prompt">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a2 2 0 0 0 2 2h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg></div>
+            <div class="t">Generate a summary report for AIM grantor</div>
+            <div class="arrow"><span>3 min</span><span>→</span></div>
+          </button>
+          <button class="prompt">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><circle cx="12" cy="17" r=".5"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+            <div class="t">Which startups are at risk?</div>
+            <div class="arrow"><span>AI scan</span><span>→</span></div>
+          </button>
+          <button class="prompt">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg></div>
+            <div class="t">Show me total revenue across programs</div>
+            <div class="arrow"><span>₹4.2 Cr</span><span>→</span></div>
+          </button>
+        </div>
+      </section>
+
+      <!-- widgets -->
+      <div class="grid">
+        <!-- Portfolio chart -->
+        <div class="widget">
+          <div class="hd">
+            <div class="t">
+              <span style="width:8px;height:8px;border-radius:2px;background:var(--ink);display:inline-block"></span>
+              Portfolio performance
+            </div>
+            <span class="meta">LAST 12 WEEKS</span>
+          </div>
+          <div class="chart">
+            <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="gradInk" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="#0A0A0A" stop-opacity=".25"/>
+                  <stop offset="1" stop-color="#0A0A0A" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="gradLime" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="#D4FF3A" stop-opacity=".35"/>
+                  <stop offset="1" stop-color="#D4FF3A" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- gridlines -->
+              <line x1="0" y1="40" x2="400" y2="40" stroke="#00000010"/>
+              <line x1="0" y1="80" x2="400" y2="80" stroke="#00000010"/>
+              <line x1="0" y1="120" x2="400" y2="120" stroke="#00000010"/>
+              <!-- lime area: revenue -->
+              <path d="M0,110 L33,100 L66,95 L100,85 L133,80 L166,72 L200,65 L233,58 L266,48 L300,40 L333,32 L366,25 L400,20 L400,160 L0,160 Z" fill="url(#gradLime)"/>
+              <path d="M0,110 L33,100 L66,95 L100,85 L133,80 L166,72 L200,65 L233,58 L266,48 L300,40 L333,32 L366,25 L400,20" fill="none" stroke="#D4FF3A" stroke-width="2.5"/>
+              <!-- ink area: cohort baseline -->
+              <path d="M0,130 L33,128 L66,120 L100,118 L133,112 L166,108 L200,100 L233,98 L266,92 L300,88 L333,80 L366,75 L400,72 L400,160 L0,160 Z" fill="url(#gradInk)"/>
+              <path d="M0,130 L33,128 L66,120 L100,118 L133,112 L166,108 L200,100 L233,98 L266,92 L300,88 L333,80 L366,75 L400,72" fill="none" stroke="#0A0A0A" stroke-width="2"/>
+              <!-- last point dot -->
+              <circle cx="400" cy="20" r="5" fill="#D4FF3A" stroke="#0A0A0A" stroke-width="2"/>
+              <circle cx="400" cy="72" r="4" fill="#fff" stroke="#0A0A0A" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="chart-foot">
+            <span class="legend">
+              <span class="dot lime">Revenue · ₹4.2 Cr</span>
+              <span class="dot">Cohort baseline · ₹2.8 Cr</span>
+            </span>
+            <span>+23% QoQ</span>
+          </div>
+        </div>
+
+        <!-- Top startups -->
+        <div class="widget">
+          <div class="hd">
+            <div class="t">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3 7 7 .8-5.2 4.7 1.5 7-6.3-3.7L5.7 21.5l1.5-7L2 9.8 9 9z"/></svg>
+              Top performers
+            </div>
+            <button class="more"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+          </div>
+          <div class="startups">
+            <div class="s-row">
+              <div class="av" style="background:#D4FF3A">G</div>
+              <div class="info"><div class="n">GreenLeaf</div><div class="s">AGRITECH · COHORT 4</div></div>
+              <div class="v">₹42L<span class="delta hot">+40%</span></div>
+            </div>
+            <div class="s-row">
+              <div class="av" style="background:#A7F3D0">K</div>
+              <div class="info"><div class="n">Kavach Health</div><div class="s">HEALTHTECH · C3</div></div>
+              <div class="v">24.8K<span class="delta hot">+62%</span></div>
+            </div>
+            <div class="s-row">
+              <div class="av" style="background:#FCE7F3">L</div>
+              <div class="info"><div class="n">Lotus Fintech</div><div class="s">FINTECH · C5</div></div>
+              <div class="v">₹2.1Cr<span class="delta good">+27%</span></div>
+            </div>
+            <div class="s-row">
+              <div class="av" style="background:#DBEAFE">N</div>
+              <div class="info"><div class="n">NovaTech AI</div><div class="s">SAAS · C5</div></div>
+              <div class="v">₹84L<span class="delta good">+18%</span></div>
+            </div>
+            <div class="s-row">
+              <div class="av" style="background:#FED7AA">M</div>
+              <div class="info"><div class="n">Mira Robotics</div><div class="s">ROBOTICS · C3</div></div>
+              <div class="v">₹0<span class="delta warn">flagged</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="widget">
+          <div class="hd">
+            <div class="t">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M9 16l2 2 4-4"/></svg>
+              Today's tasks
+            </div>
+            <span class="meta">3 OF 5 DONE</span>
+          </div>
+          <div class="tasks">
+            <div class="task">
+              <div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5L20 7"/></svg></div>
+              <div class="body">
+                <div class="t">Review AIM Q1 report draft</div>
+                <div class="m"><span class="pri high">HIGH</span><span>Due 5pm today</span></div>
+              </div>
+            </div>
+            <div class="task">
+              <div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5L20 7"/></svg></div>
+              <div class="body">
+                <div class="t">Approve Mira Robotics mentor request</div>
+                <div class="m"><span class="pri med">MED</span><span>2 mentors waitlisted</span></div>
+              </div>
+            </div>
+            <div class="task done">
+              <div class="cb done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5L20 7"/></svg></div>
+              <div class="body">
+                <div class="t">Sync DPIIT recognition data</div>
+                <div class="m"><span class="pri med">MED</span><span>Done · 10:14 AM</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========= RIGHT PANEL ========= -->
+  <aside class="right">
+    <div class="hd">
+      <div class="t">Recent activity</div>
+      <span class="new">3 new</span>
+    </div>
+    <div class="body">
+
+      <div class="upcoming">
+        <div class="l">UP NEXT · 14:30</div>
+        <div class="t">Cohort 5 demo day rehearsal</div>
+        <div class="when">In 2 hours · 8 founders presenting</div>
+        <a href="#" class="cta">Join briefing <span style="font-family:'JetBrains Mono',monospace">→</span></a>
+      </div>
+
+      <div class="section-label">Recent chats</div>
+      <div class="chat-row active">
+        <div class="t">Q1 portfolio summary for AIM grantor</div>
+        <div class="meta"><span>NOW</span><span>42 startups</span></div>
+      </div>
+      <div class="chat-row">
+        <div class="t">Why is Mira Robotics flagged?</div>
+        <div class="meta"><span>2H AGO</span><span>3 turns</span></div>
+      </div>
+      <div class="chat-row">
+        <div class="t">Compare Cohort 3 and Cohort 5 revenue</div>
+        <div class="meta"><span>YESTERDAY</span><span>5 turns</span></div>
+      </div>
+      <div class="chat-row">
+        <div class="t">Draft email to DST about NIDHI compliance</div>
+        <div class="meta"><span>2 DAYS AGO</span><span>1 turn</span></div>
+      </div>
+
+      <div class="section-label" style="margin-top:18px">Activity</div>
+      <div class="activity-row">
+        <div class="ic lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v4h-4"/></svg></div>
+        <div class="body"><div class="t"><b>GreenLeaf</b> revenue up <b>40%</b> MoM</div><div class="m">12 MIN AGO · AI INSIGHT</div></div>
+      </div>
+      <div class="activity-row">
+        <div class="ic mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a2 2 0 0 0 2 2h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13l2 2 4-4"/></svg></div>
+        <div class="body"><div class="t">AIM Q1 report ready for review</div><div class="m">38 MIN AGO · BY AI</div></div>
+      </div>
+      <div class="activity-row">
+        <div class="ic warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><circle cx="12" cy="17" r=".5"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+        <div class="body"><div class="t"><b>Mira Robotics</b> flagged · zero revenue Q1</div><div class="m">1 H AGO · AUTO-DETECTED</div></div>
+      </div>
+      <div class="activity-row">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/></svg></div>
+        <div class="body"><div class="t">Priya Iyer joined as mentor</div><div class="m">3 H AGO · DESIGN</div></div>
+      </div>
+      <div class="activity-row">
+        <div class="ic mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <div class="body"><div class="t">37 startups submitted Q1 reports</div><div class="m">YESTERDAY · 89% COMPLIANCE</div></div>
+      </div>
+      <div class="activity-row">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <div class="body"><div class="t">Demo day scheduled · 12 May</div><div class="m">YESTERDAY · 8 STARTUPS</div></div>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<script>
+  // Click prompt to fill input
+  document.querySelectorAll('.prompt').forEach(p=>{
+    p.addEventListener('click',()=>{
+      const t = p.querySelector('.t').textContent.trim();
+      const ta = document.getElementById('prompt');
+      ta.value = t; ta.focus();
+    });
+  });
+  // Task checkbox toggle
+  document.querySelectorAll('.task .cb').forEach(cb=>{
+    cb.addEventListener('click',()=>{
+      cb.classList.toggle('done');
+      cb.closest('.task').classList.toggle('done');
+    });
+  });
+  // Send animation
+  const send = document.getElementById('send-btn');
+  send.addEventListener('click',()=>{
+    send.style.transform='translateX(40px) rotate(-15deg)';
+    send.style.opacity='0';
+    setTimeout(()=>{ send.style.transition='none'; send.style.transform='translateX(-40px) rotate(0)'; send.style.opacity='0';
+      setTimeout(()=>{ send.style.transition='all .3s'; send.style.transform=''; send.style.opacity='1'; },50);
+    },300);
+  });
+</script>
+</body>
+</html>

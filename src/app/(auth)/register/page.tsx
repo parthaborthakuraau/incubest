@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff, CheckCircle2, Check, X, Loader2 } from "lucide-react";
@@ -52,11 +52,8 @@ function PasswordStrength({ password }: { password: string }) {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(
-    searchParams.get("error") === "no-account" ? "No account found with this email. Please register first." : ""
-  );
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1); // 1: details, 2: OTP, 3: org details
   const [password, setPassword] = useState("");
@@ -71,6 +68,14 @@ export default function RegisterPage() {
 
   // Store step 1 data
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+
+  // Check for error param on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "no-account") {
+      setError("No account found with this email. Please register first.");
+    }
+  }, []);
 
   // Cooldown timer
   useEffect(() => {

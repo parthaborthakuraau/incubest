@@ -10,6 +10,7 @@ import { TopbarDocs } from "./topbar-docs";
 import { Sidebar } from "./sidebar";
 import { InviteTeamButton } from "./invite-team-button";
 import { InviteCofounderButton } from "./invite-cofounder-button";
+import { ProgramSwitcher } from "./program-switcher";
 
 export function MobileLayout({
   children,
@@ -55,6 +56,7 @@ export function MobileLayout({
             <Menu className="h-5 w-5" />
           </button>
           <div className="hidden md:block"><Breadcrumbs /></div>
+          <ProgramSwitcher role={role} />
           <div className="flex-1"><TopbarSearch role={role} /></div>
           <div className="flex items-center gap-1.5">
             {role === "incubator" && <InviteTeamButton />}

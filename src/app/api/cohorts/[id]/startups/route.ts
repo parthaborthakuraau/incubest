@@ -38,7 +38,7 @@ export async function GET(
   return NextResponse.json(startups);
 }
 
-// POST — pre-register a single startup (DRAFT status)
+// POST - add a startup to cohort (supports multi-incubator)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -61,28 +61,67 @@ export async function POST(
       );
     }
 
+    const orgId = session.user.organizationId!;
+
     // Check cohort belongs to this org
     const cohort = await db.cohort.findFirst({
-      where: { id: cohortId, organizationId: session.user.organizationId! },
+      where: { id: cohortId, organizationId: orgId },
     });
     if (!cohort) {
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 });
     }
 
-    // Check if email already exists
-    const existingUser = await db.user.findUnique({ where: { email: founderEmail } });
+    // Check if founder email already exists
+    const existingUser = await db.user.findUnique({
+      where: { email: founderEmail },
+      include: {
+        startups: {
+          include: {
+            cohort: {
+              include: {
+                organization: { select: { id: true, name: true } },
+                program: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Collect cross-incubator warnings
+    const warnings: string[] = [];
+
     if (existingUser) {
-      return NextResponse.json({ error: `Email ${founderEmail} already registered` }, { status: 400 });
+      // Check if already in THIS cohort
+      const alreadyInThisCohort = existingUser.startups.some(s => s.cohortId === cohortId);
+      if (alreadyInThisCohort) {
+        return NextResponse.json(
+          { error: "This founder already has a startup in this cohort" },
+          { status: 400 }
+        );
+      }
+
+      // Build warnings for other incubations
+      for (const s of existingUser.startups) {
+        const org = s.cohort.organization;
+        const prog = s.cohort.program;
+        if (org.id === orgId) {
+          warnings.push(`Already in your org: "${s.name}" in ${prog?.name || s.cohort.name}`);
+        } else {
+          warnings.push(`Incubated at ${org.name}: "${s.name}" in ${prog?.name || "general"}`);
+        }
+      }
     }
 
     // Generate unique slug
     let slug = slugify(startupName);
-    const existing = await db.startup.findUnique({ where: { slug } });
-    if (existing) slug = `${slug}-${Date.now().toString(36)}`;
+    const existingSlug = await db.startup.findUnique({ where: { slug } });
+    if (existingSlug) slug = `${slug}-${Date.now().toString(36)}`;
 
     // Generate passport ID
-    const passportId = await generateStartupPassportId(state || cohort.organizationId);
+    const passportId = await generateStartupPassportId(state || orgId);
 
+    // Create the startup
     const startup = await db.startup.create({
       data: {
         name: startupName,
@@ -98,28 +137,45 @@ export async function POST(
       },
     });
 
-    // Create a placeholder user (no password — they'll set it on the join page)
-    await db.user.create({
-      data: {
-        name: founderName,
-        email: founderEmail,
-        role: "STARTUP_FOUNDER",
-        activeStartupId: startup.id,
-        startups: { connect: { id: startup.id } },
-      },
-    });
+    if (existingUser) {
+      // Link existing user to new startup (many-to-many)
+      await db.user.update({
+        where: { id: existingUser.id },
+        data: {
+          startups: { connect: { id: startup.id } },
+        },
+      });
+    } else {
+      // Create new placeholder user
+      await db.user.create({
+        data: {
+          name: founderName,
+          email: founderEmail,
+          role: "STARTUP_FOUNDER",
+          activeStartupId: startup.id,
+          startups: { connect: { id: startup.id } },
+        },
+      });
+    }
 
-    // Run passport scan (non-blocking — don't fail the request if scan fails)
+    // Run passport scan (non-blocking)
     runPassportScan({
       startupId: startup.id,
       name: startupName,
       founderEmail,
       founderName,
       city,
-      excludeOrgId: session.user.organizationId!,
+      excludeOrgId: orgId,
     }).catch((err) => console.error("Passport scan error:", err));
 
-    return NextResponse.json(startup, { status: 201 });
+    return NextResponse.json(
+      {
+        ...startup,
+        warnings: warnings.length > 0 ? warnings : undefined,
+        crossIncubator: warnings.length > 0,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Pre-register error:", error);
     return NextResponse.json({ error: "Failed to add startup" }, { status: 500 });

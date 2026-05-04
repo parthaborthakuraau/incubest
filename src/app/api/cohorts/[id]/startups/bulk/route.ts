@@ -6,7 +6,7 @@ import { slugify } from "@/lib/utils";
 import { generateStartupPassportId } from "@/lib/passport";
 import { runPassportScan } from "@/lib/passport-scan";
 
-// POST — bulk pre-register startups from CSV data
+// POST - bulk add startups (supports multi-incubator)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,24 +17,24 @@ export async function POST(
   }
 
   const { id: cohortId } = await params;
+  const orgId = session.user.organizationId!;
 
   try {
     const body = await req.json();
-    const { rows } = body; // Array of { startupName, founderName, founderEmail, sector?, stage?, city?, state? }
+    const { rows } = body;
 
     if (!rows || !Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json({ error: "No data provided" }, { status: 400 });
     }
 
-    // Check cohort
     const cohort = await db.cohort.findFirst({
-      where: { id: cohortId, organizationId: session.user.organizationId! },
+      where: { id: cohortId, organizationId: orgId },
     });
     if (!cohort) {
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 });
     }
 
-    const results: { name: string; status: "created" | "error"; error?: string }[] = [];
+    const results: { name: string; status: "created" | "linked" | "error"; warning?: string; error?: string }[] = [];
 
     for (const row of rows) {
       const { startupName, founderName, founderEmail, sector, stage, city, state } = row;
@@ -44,17 +44,40 @@ export async function POST(
         continue;
       }
 
-      // Check if email already exists
-      const existingUser = await db.user.findUnique({ where: { email: founderEmail } });
-      if (existingUser) {
-        results.push({ name: startupName, status: "error", error: `Email ${founderEmail} already registered` });
-        continue;
-      }
-
       try {
+        // Check if founder exists
+        const existingUser = await db.user.findUnique({
+          where: { email: founderEmail },
+          include: {
+            startups: {
+              include: {
+                cohort: {
+                  include: {
+                    organization: { select: { id: true, name: true } },
+                    program: { select: { name: true } },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Check if already in this cohort
+        if (existingUser?.startups.some(s => s.cohortId === cohortId)) {
+          results.push({ name: startupName, status: "error", error: "Already in this cohort" });
+          continue;
+        }
+
+        // Build warning if cross-incubator
+        let warning: string | undefined;
+        if (existingUser && existingUser.startups.length > 0) {
+          const orgs = existingUser.startups.map(s => s.cohort.organization.name);
+          warning = `Also incubated at: ${[...new Set(orgs)].join(", ")}`;
+        }
+
         let slug = slugify(startupName);
-        const existing = await db.startup.findUnique({ where: { slug } });
-        if (existing) slug = `${slug}-${Date.now().toString(36)}`;
+        const existingSlug = await db.startup.findUnique({ where: { slug } });
+        if (existingSlug) slug = `${slug}-${Date.now().toString(36)}`;
 
         const passportId = await generateStartupPassportId(state);
 
@@ -72,32 +95,43 @@ export async function POST(
           },
         });
 
-        await db.user.create({
-          data: {
-            name: founderName,
-            email: founderEmail,
-            role: "STARTUP_FOUNDER",
-            activeStartupId: startup.id,
-            startups: { connect: { id: startup.id } },
-          },
-        });
+        if (existingUser) {
+          // Link existing user to new startup
+          await db.user.update({
+            where: { id: existingUser.id },
+            data: { startups: { connect: { id: startup.id } } },
+          });
+          results.push({ name: startupName, status: "linked", warning });
+        } else {
+          // Create new user
+          await db.user.create({
+            data: {
+              name: founderName,
+              email: founderEmail,
+              role: "STARTUP_FOUNDER",
+              activeStartupId: startup.id,
+              startups: { connect: { id: startup.id } },
+            },
+          });
+          results.push({ name: startupName, status: "created" });
+        }
 
         // Run passport scan in background
         runPassportScan({
           startupId: startup.id, name: startupName, founderEmail,
-          founderName, city, excludeOrgId: session.user.organizationId!,
+          founderName, city, excludeOrgId: orgId,
         }).catch(() => {});
 
-        results.push({ name: startupName, status: "created" });
-      } catch (err) {
+      } catch {
         results.push({ name: startupName, status: "error", error: "Creation failed" });
       }
     }
 
-    const created = results.filter((r) => r.status === "created").length;
-    const errors = results.filter((r) => r.status === "error").length;
+    const created = results.filter(r => r.status === "created").length;
+    const linked = results.filter(r => r.status === "linked").length;
+    const errors = results.filter(r => r.status === "error").length;
 
-    return NextResponse.json({ created, errors, results }, { status: 201 });
+    return NextResponse.json({ created, linked, errors, results }, { status: 201 });
   } catch (error) {
     console.error("Bulk upload error:", error);
     return NextResponse.json({ error: "Failed to process bulk upload" }, { status: 500 });

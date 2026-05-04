@@ -242,38 +242,7 @@ export function Sidebar({ role, orgName, teamRole, assignedProgramId }: SidebarP
           );
         })}
 
-        {/* Programs quick list */}
-        {role === "incubator" && !isInProgram && programs.length > 0 && !collapsed && (
-          <>
-            <div className="pt-4 pb-1 px-1">
-              <p
-                className="text-[10px] font-semibold uppercase"
-                style={{ fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", color: "#8A8A82" }}
-              >
-                My Programs
-              </p>
-            </div>
-            {programs.filter(p => !isMember || p.id === assignedProgramId).map(p => {
-              const active = pathname.startsWith(`/incubator/programs/${p.id}`);
-              return (
-                <Link
-                  key={p.id}
-                  href={`/incubator/programs/${p.id}`}
-                  title={collapsed ? p.name : undefined}
-                  className="group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all"
-                  style={{
-                    color: active ? "#0A0A0A" : "#5a5a55",
-                    backgroundColor: active ? "#0A0A0A" : "transparent",
-                    ...(active ? { color: "#fff" } : {}),
-                  }}
-                >
-                  <FolderKanban className="h-[16px] w-[16px] shrink-0" />
-                  <span className="truncate">{p.name}</span>
-                </Link>
-              );
-            })}
-          </>
-        )}
+        {/* Programs quick list removed - now in topbar dropdown */}
       </nav>
 
       {/* Bottom */}

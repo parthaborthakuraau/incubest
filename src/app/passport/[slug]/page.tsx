@@ -36,6 +36,47 @@ export default async function StartupPassport({
   const org = startup.cohort.organization;
   const program = startup.cohort.program;
 
+  // Find ALL incubations for this founder (multi-incubator support)
+  const founderEmails = startup.founders.map(f => f.name); // name is loaded, email below
+  const founderUsers = await db.user.findMany({
+    where: {
+      startups: { some: { id: startup.id } },
+      role: "STARTUP_FOUNDER",
+    },
+    select: { email: true },
+  });
+
+  // Get all startups linked to these founders (across all incubators)
+  const allLinkedStartups = founderUsers.length > 0
+    ? await db.startup.findMany({
+        where: {
+          founders: { some: { email: { in: founderUsers.map(u => u.email) } } },
+        },
+        include: {
+          cohort: {
+            include: {
+              organization: { select: { name: true, city: true, state: true } },
+              program: { select: { name: true, grantor: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const incubationHistory = allLinkedStartups.map(s => ({
+    startupName: s.name,
+    orgName: s.cohort.organization.name,
+    orgCity: s.cohort.organization.city,
+    orgState: s.cohort.organization.state,
+    programName: s.cohort.program?.name,
+    grantor: s.cohort.program?.grantor,
+    cohortName: s.cohort.name,
+    isCurrent: s.id === startup.id,
+    passportId: s.passportId,
+    slug: s.slug,
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -116,17 +157,48 @@ export default async function StartupPassport({
             </CardContent>
           </Card>
 
-          {/* Incubation */}
+          {/* Incubation History */}
           <Card>
-            <CardHeader><CardTitle>Incubation</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Incubation History ({incubationHistory.length})
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
-              <InfoRow icon={Building2} label="Incubator" value={org.name} />
-              {org.city && <InfoRow icon={MapPin} label="Incubator Location" value={[org.city, org.state].filter(Boolean).join(", ")} />}
-              {org.type && <InfoRow icon={Award} label="Incubator Type" value={org.type} />}
-              <InfoRow icon={Users} label="Cohort" value={startup.cohort.name} />
-              {program && (
-                <InfoRow icon={Briefcase} label="Program" value={`${program.name}${program.grantor ? ` (${program.grantor})` : ""}`} />
-              )}
+              {incubationHistory.map((inc, i) => (
+                <div
+                  key={i}
+                  className={`rounded-xl border p-4 ${inc.isCurrent ? "border-emerald-200 bg-emerald-50" : "border-gray-100"}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-semibold">{inc.orgName}</p>
+                    {inc.isCurrent && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        Current
+                      </span>
+                    )}
+                  </div>
+                  {inc.orgCity && (
+                    <p className="text-xs text-gray-500">{[inc.orgCity, inc.orgState].filter(Boolean).join(", ")}</p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {inc.programName && (
+                      <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                        {inc.programName}{inc.grantor ? ` (${inc.grantor})` : ""}
+                      </span>
+                    )}
+                    <span className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      {inc.cohortName}
+                    </span>
+                  </div>
+                  {!inc.isCurrent && inc.slug && (
+                    <Link href={`/passport/${inc.slug}`} className="text-xs text-brand-600 hover:underline mt-2 inline-block">
+                      View passport
+                    </Link>
+                  )}
+                </div>
+              ))}
               <InfoRow icon={Calendar} label="Reports Submitted" value={String(startup._count.reports)} />
             </CardContent>
           </Card>

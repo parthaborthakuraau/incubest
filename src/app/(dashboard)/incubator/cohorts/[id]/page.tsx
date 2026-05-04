@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { isIncubatorRole } from "@/lib/roles";
 import { db } from "@/lib/db";
 import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ export default async function CohortDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     redirect("/login");
   }
 

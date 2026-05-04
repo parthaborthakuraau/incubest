@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { isIncubatorRole } from "@/lib/roles";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -24,7 +25,7 @@ import { AIInsights } from "@/components/dashboard/ai-insights";
 
 export default async function IncubatorDashboard() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     redirect("/login");
   }
 

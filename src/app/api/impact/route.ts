@@ -1,3 +1,4 @@
+import { isIncubatorRole } from "@/lib/roles";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -5,7 +6,7 @@ import { db } from "@/lib/db";
 // GET — compute impact metrics for the entire organization
 export async function GET() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,3 +1,4 @@
+import { isIncubatorRole } from "@/lib/roles";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -5,7 +6,7 @@ import { db } from "@/lib/db";
 // POST — incubator admin sends report reminders to startups that haven't reported this month
 export async function POST() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

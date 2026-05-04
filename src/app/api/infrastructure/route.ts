@@ -1,3 +1,4 @@
+import { isIncubatorRole } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -5,7 +6,7 @@ import { db } from "@/lib/db";
 // Get all spaces for the organization with allocations
 export async function GET() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const orgId = session.user.organizationId!;
@@ -36,7 +37,7 @@ export async function GET() {
 // Create a new space
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "INCUBATOR_ADMIN") {
+  if (!session?.user || !isIncubatorRole(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const orgId = session.user.organizationId!;
